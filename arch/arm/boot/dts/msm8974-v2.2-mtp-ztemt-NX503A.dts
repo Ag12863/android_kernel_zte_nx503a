@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -10,19 +10,19 @@
  * GNU General Public License for more details.
  */
 
-&spmi_bus {
+/dts-v1/;
 
-	qcom,pm8941@0 {
+/include/ "ztedts/ztemt_msm8974-v2.2.dtsi"
+/include/ "ztedts/ztemt_msm8974-mtp.dtsi"
 
-		pm8941_clkdiv1: clkdiv@5b00 {
-			qcom,cxo-div = <2>;
-		};
+/ {
+	model = "Qualcomm MSM 8974v2.2 MTP";
+	compatible = "qcom,msm8974-mtp", "qcom,msm8974", "qcom,mtp";
+	qcom,msm-id = <126 8 0x20002>,
+		      <185 8 0x20002>,
+		      <186 8 0x20002>;
+};
 
-		pm8941_clkdiv2: clkdiv@5c00 {
-			qcom,cxo-div = <1>;
-		};
-
-		pm8941_clkdiv3: clkdiv@5d00 {
-		};
-	};
+&pm8941_chg {
+	qcom,bpd-detection = "bpd_thm";
 };
