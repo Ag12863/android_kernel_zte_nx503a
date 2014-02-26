@@ -58,9 +58,16 @@ static int mdss_dsi_regulator_init(struct platform_device *pdev)
 				__func__, PTR_ERR(dsi_drv->vdd_vreg));
 			return PTR_ERR(dsi_drv->vdd_vreg);
 		}
-
+#ifdef CONFIG_ZTEMT_LCD_IOVDD_CONTRL_BY_LDO
+/*ldo22 only suplly lcd iovdd power,so can contrl sparate.
+* or vddio can not del ,vddio suplly power other ,eg mipi.mayu*/
+		ret = regulator_set_voltage(dsi_drv->vdd_vreg, 1800000,
+				1800000);
+#else
+/*qcom ori*/
 		ret = regulator_set_voltage(dsi_drv->vdd_vreg, 3000000,
 				3000000);
+#endif
 		if (ret) {
 			pr_err("%s: set voltage failed on vdda vreg, rc=%d\n",
 				__func__, ret);
@@ -163,7 +170,13 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 					__func__);
 				return ret;
 			}
+#ifdef CONFIG_ZTEMT_LCD_MIPI_COMMON
+/*use udelay mayu modify 2013.10.17*/
+			mdelay(20);
+#else
+/*qcom ori*/
 			msleep(20);
+#endif
 
 			ret = regulator_enable(
 				(ctrl_pdata->shared_pdata).vdd_vreg);
@@ -172,7 +185,13 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 					__func__);
 				return ret;
 			}
+#ifdef CONFIG_ZTEMT_LCD_MIPI_COMMON
+/*use udelay mayu modify 2013.10.17*/
+			mdelay(20);
+#else
+/*qcom ori*/
 			msleep(20);
+#endif
 
 			ret = regulator_enable(
 				(ctrl_pdata->shared_pdata).vdda_vreg);
@@ -200,6 +219,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 				return ret;
 			}
 		} else {
+
 			ret = regulator_disable(
 				(ctrl_pdata->shared_pdata).vdd_vreg);
 			if (ret) {
@@ -207,6 +227,7 @@ static int mdss_dsi_panel_power_on(struct mdss_panel_data *pdata, int enable)
 					__func__);
 				return ret;
 			}
+
 
 			ret = regulator_disable(
 				(ctrl_pdata->shared_pdata).vdda_vreg);
@@ -1098,6 +1119,24 @@ int dsi_panel_device_register(struct platform_device *pdev,
 			return -ENODEV;
 		}
 	}
+
+#ifdef CONFIG_ZTEMT_LCD_AVDD_NEGATIVE_CONTRL
+/*avdd neg ctl board2 add ,mayu 6.25*/
+	ctrl_pdata->avdd_neg_en_gpio = of_get_named_gpio(pdev->dev.of_node,
+						     "qcom,avddn-enable-gpio", 0);
+	if (!gpio_is_valid(ctrl_pdata->avdd_neg_en_gpio)) {
+		pr_err("%s:%d, avdd_neg_en_gpio gpio not specified\n",
+						__func__, __LINE__);
+	} else {
+		rc = gpio_request(ctrl_pdata->avdd_neg_en_gpio, "lcd_avdd_neg_enable");
+		if (rc) {
+			pr_err("request reset gpio failed, rc=%d\n",
+			       rc);
+			gpio_free(ctrl_pdata->avdd_neg_en_gpio);
+			return -ENODEV;
+		}
+	}
+#endif
 
 	ctrl_pdata->disp_te_gpio = of_get_named_gpio(pdev->dev.of_node,
 						     "qcom,te-gpio", 0);

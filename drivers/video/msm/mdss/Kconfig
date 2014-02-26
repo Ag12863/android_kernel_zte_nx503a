@@ -20,3 +20,30 @@ config FB_MSM_MDSS_HDMI_MHL_SII8334
 	  Support the HDMI to MHL conversion.
 	  MHL (Mobile High-Definition Link) technology
 	  uses USB connector to output HDMI content
+#mayu 2012.12.19
+menu "ZTEMT lcd driver support"
+config ZTEMT_LCD_MIPI_COMMON
+	bool "ztemt lcd MIPI interface driver module"
+	default n
+config ZTEMT_LCD_IOVDD_CONTRL_BY_LDO
+	bool "ztemt lcd IOVDD contrl by ldo"
+	depends on ZTEMT_LCD_MIPI_COMMON
+	default n
+config ZTEMT_LCD_AVDD_NEGATIVE_CONTRL
+	bool "ztemt lcd AVDD negative contrl"
+	depends on ZTEMT_LCD_MIPI_COMMON
+	default n
+config ZTEMT_LCD_AVDD_CONFIG_BY_TPS65132
+	bool "ztemt lcd AVDD config by tps65132"
+	depends on ZTEMT_LCD_MIPI_COMMON
+	default n
+config ZTEMT_MIPI_1080P_R63311_SHARP_IPS
+	bool "MIPI 1080P R63311 SHARP IPS as default lcd"
+	depends on ZTEMT_LCD_MIPI_COMMON
+	default n
+config ZTEMT_LCD_DISP_ENHANCE
+	bool "LCD disp color enhance"
+	depends on ZTEMT_LCD_MIPI_COMMON
+	default n
+endmenu
+source "drivers/video/msm/mdss/slimport_anx7808/Kconfig"

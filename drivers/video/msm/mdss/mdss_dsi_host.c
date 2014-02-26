@@ -1169,8 +1169,10 @@ int mdss_dsi_cmds_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 		mdss_dsi_cmd_dma_add(tp, cm);
 		mdss_dsi_cmd_dma_tx(ctrl, tp);
 		dchdr = &cm->dchdr;
+
 		if (dchdr->wait)
 			usleep(dchdr->wait * 1000);
+
 		cm++;
 	}
 
@@ -1405,14 +1407,28 @@ static int mdss_dsi_cmd_dma_rx(struct mdss_dsi_ctrl_pdata *ctrl,
 void mdss_dsi_wait4video_done(struct mdss_dsi_ctrl_pdata *ctrl)
 {
 	unsigned long flag;
+//mayu merage code from 2020.2013.9. 
+  u32 data;
+
+	/* DSI_INTL_CTRL */
+	data = MIPI_INP((ctrl->ctrl_base) + 0x0110);
+	data |= DSI_INTR_VIDEO_DONE_MASK;
+
+	MIPI_OUTP((ctrl->ctrl_base) + 0x0110, data);
+//mayu merage end
 
 	spin_lock_irqsave(&ctrl->mdp_lock, flag);
 	INIT_COMPLETION(ctrl->video_comp);
 	mdss_dsi_enable_irq(ctrl, DSI_VIDEO_TERM);
 	spin_unlock_irqrestore(&ctrl->mdp_lock, flag);
-
 	wait_for_completion_timeout(&ctrl->video_comp,
 			msecs_to_jiffies(VSYNC_PERIOD * 4));
+
+//mayu merage code from 2020.2013.9. 
+	data = MIPI_INP((ctrl->ctrl_base) + 0x0110);
+	data &= ~DSI_INTR_VIDEO_DONE_MASK;
+	MIPI_OUTP((ctrl->ctrl_base) + 0x0110, data);
+//mayu merage end
 }
 
 static void mdss_dsi_wait4video_eng_busy(struct mdss_dsi_ctrl_pdata *ctrl)
