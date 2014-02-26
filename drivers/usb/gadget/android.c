@@ -1705,6 +1705,10 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	if (!config)
 		return -ENOMEM;
 
+#ifdef CONFIG_ZTEMT_USB_CDROM
+	dev->pdata->cdrom = 1;
+#endif
+
 	config->fsg.nluns = 1;
 	name[0] = "lun";
 	if (dev->pdata && dev->pdata->cdrom) {
@@ -1716,6 +1720,11 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	}
 
 	config->fsg.luns[0].removable = 1;
+
+#ifdef CONFIG_ZTEMT_USB_CDROM
+	config->fsg.vendor_name = "nubia";
+	config->fsg.product_name = "Android";
+#endif
 
 	common = fsg_common_init(NULL, cdev, &config->fsg);
 	if (IS_ERR(common)) {
