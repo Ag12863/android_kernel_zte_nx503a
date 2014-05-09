@@ -3566,7 +3566,8 @@ static struct platform_driver msm_serial_hs_platform_driver = {
 	.remove = __devexit_p(msm_hs_remove),
 	.driver = {
 		.name = "msm_serial_hs",
-		.pm   = &msm_hs_dev_pm_ops,
+		//modify for crahs issue
+		/*.pm   = &msm_hs_dev_pm_ops,*/
 		.of_match_table = msm_hs_match_table,
 	},
 };
@@ -3597,6 +3598,8 @@ static struct uart_ops msm_hs_ops = {
 	.request_port = msm_hs_request_port,
 	.flush_buffer = msm_hs_flush_buffer,
 	.ioctl = msm_hs_ioctl,
+	//modify for crahs issue
+	.pm = msm_hs_power,
 };
 
 module_init(msm_serial_hs_init);

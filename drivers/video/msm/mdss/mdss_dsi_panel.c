@@ -28,15 +28,11 @@
 
 DEFINE_LED_TRIGGER(bl_led_trigger);
 
-static struct mdss_dsi_phy_ctrl phy_params;
+
 #ifdef CONFIG_ZTEMT_LCD_DISP_ENHANCE
-enum {
-	INTENSITY_NORMAL=24,
-	INTENSITY_01,
-	INTENSITY_02
-};
 extern unsigned int zte_intensity_value;
 extern struct mdss_dsi_ctrl_pdata *zte_mdss_dsi_ctrl;
+extern void zte_mipi_disp_inc(unsigned int state);
 #endif
 
 #ifdef CONFIG_ZTEMT_MIPI_1080P_R63311_SHARP_IPS
@@ -398,6 +394,7 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 
 #ifdef CONFIG_ZTEMT_LCD_DEBUG_EN
 		pr_err("lcd:%s: bl_level=%d\n", __func__,bl_level);
+#endif
 
 	switch (ctrl_pdata->bklt_ctrl) {
 	case BL_WLED:
@@ -438,35 +435,17 @@ static int mdss_dsi_panel_on(struct mdss_panel_data *pdata)
 	pr_debug("%s: ctrl=%p ndx=%d\n", __func__, ctrl, ctrl->ndx);
 #endif
 
+	if (ctrl->on_cmds.cmd_cnt)
+		mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
+
 #ifdef CONFIG_ZTEMT_LCD_DISP_ENHANCE
 /*disp color enhance,mayu add*/
 	zte_mdss_dsi_ctrl = ctrl;
+  	zte_mipi_disp_inc(zte_intensity_value);
 
 #ifdef CONFIG_ZTEMT_LCD_DEBUG_EN
   printk("lcd:%s zte_intensity_value=%d====\n", __func__, zte_intensity_value);
 #endif
-
-	switch (zte_intensity_value) {
-	case INTENSITY_NORMAL:
-		if (ctrl->on_cmds.cmd_cnt)
-		  mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
-		break;
-	case INTENSITY_01:
-		if (ctrl->enhance_n_cmds.cmd_cnt)
-		   mdss_dsi_panel_cmds_send(ctrl, &ctrl->enhance_n_cmds);
-		break;
-	case INTENSITY_02:
-		if (ctrl->enhance_i_cmds.cmd_cnt)
-		   mdss_dsi_panel_cmds_send(ctrl, &ctrl->enhance_i_cmds);
-		break;
-	default:
-		if (ctrl->on_cmds.cmd_cnt)
-		  mdss_dsi_panel_cmds_send(ctrl, &ctrl->on_cmds);
-		break;
-
-	}
-#else
-//no
 #endif
 
 	pr_debug("%s:-\n", __func__);

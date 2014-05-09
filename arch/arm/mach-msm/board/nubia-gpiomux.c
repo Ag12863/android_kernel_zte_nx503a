@@ -151,11 +151,13 @@ static struct gpiomux_setting gpio_spi_config = {
 	.drv = GPIOMUX_DRV_12MA,
 	.pull = GPIOMUX_PULL_NONE,
 };
+#if 0
 static struct gpiomux_setting gpio_spi_susp_config = {
 	.func = GPIOMUX_FUNC_GPIO,
 	.drv = GPIOMUX_DRV_2MA,
 	.pull = GPIOMUX_PULL_DOWN,
 };
+#endif
 #ifdef CONFIG_ZTEMT_LCD_AVDD_NEGATIVE_CONTRL
 /*avdd neg ctl by gpio8 board2 add ,mayu 6.25*/
 #else

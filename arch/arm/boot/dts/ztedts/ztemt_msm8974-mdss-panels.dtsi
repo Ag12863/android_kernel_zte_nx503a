@@ -16,4 +16,4 @@
 /include/ "../dsi-panel-generic-720p-cmd.dtsi"
 /include/ "../dsi-panel-jdi-1080p-video.dtsi"
 /include/ "ztemt_dsi-panel-sharp-1080p-ips-video.dtsi"
-/include/ "ztemt_dsi-panel-toshiba-720p-video.dtsi
+/include/ "ztemt_dsi-panel-toshiba-720p-video.dtsi"
