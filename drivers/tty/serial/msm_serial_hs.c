@@ -1926,6 +1926,22 @@ static void msm_hs_flush_buffer(struct uart_port *uport)
 		msm_uport->tty_flush_receive = true;
 }
 
+//modify for crash issue
+static void msm_hs_power(struct uart_port *port, unsigned int state,
+			  unsigned int oldstate)
+{
+	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(port);
+
+	switch (state) {
+	case 1:
+		msm_hs_request_clock_on(&msm_uport->uport);
+		break;
+	default:
+		break;
+	}
+}
+//modify end
+
 /*
  *  Standard API, Break Signal
  *
