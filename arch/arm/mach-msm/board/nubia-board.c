@@ -41,14 +41,14 @@
 #include <mach/rpm-regulator-smd.h>
 #include <mach/socinfo.h>
 #include <mach/msm_smem.h>
-#include "board-dt.h"
-#include "clock.h"
-#include "devices.h"
-#include "spm.h"
-#include "pm.h"
-#include "modem_notifier.h"
-#include "platsmp.h"
-
+#include "../board-dt.h"
+#include "../clock.h"
+#include "../devices.h"
+#include "../spm.h"
+#include "../pm.h"
+#include "../modem_notifier.h"
+#include "../platsmp.h"
+#include <linux/qpnp/pin.h>
 
 static struct memtype_reserve msm8974_reserve_table[] __initdata = {
 	[MEMTYPE_SMI] = {
@@ -163,6 +163,7 @@ static void __init msm8974_map_io(void)
 	msm_map_8974_io();
 }
 
+extern int __init bcm_wifi_init(void);
 void __init msm8974_init(void)
 {
 	struct of_dev_auxdata *adata = msm8974_auxdata_lookup;
@@ -170,9 +171,11 @@ void __init msm8974_init(void)
 	if (socinfo_init() < 0)
 		pr_err("%s: socinfo_init() failed\n", __func__);
 
+	printk("enter %s\n", __func__);
 	msm_8974_init_gpiomux();
 	regulator_has_full_constraints();
 	board_dt_populate(adata);
+	bcm_wifi_init(); //add for wifi init. 12-08-2013 pengqin
 	msm8974_add_drivers();
 }
 
@@ -187,7 +190,7 @@ static const char *msm8974_dt_match[] __initconst = {
 	NULL
 };
 
-DT_MACHINE_START(MSM8974_DT, "Qualcomm MSM 8974 (Flattened Device Tree)")
+DT_MACHINE_START(MSM8974_DT, "nubia")
 	.map_io = msm8974_map_io,
 	.init_irq = msm_dt_init_irq,
 	.init_machine = msm8974_init,
