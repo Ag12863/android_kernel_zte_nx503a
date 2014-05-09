@@ -1,9 +1,9 @@
 /*
  *  Universal power supply monitor class
  *
- *  Copyright Â© 2007  Anton Vorontsov <cbou@mail.ru>
- *  Copyright Â© 2004  Szabolcs Gyurko
- *  Copyright Â© 2003  Ian Molton <spyro@f2s.com>
+ *  Copyright 漏 2007  Anton Vorontsov <cbou@mail.ru>
+ *  Copyright 漏 2004  Szabolcs Gyurko
+ *  Copyright 漏 2003  Ian Molton <spyro@f2s.com>
  *
  *  Modified: 2004, Oct     Szabolcs Gyurko
  *
@@ -170,7 +170,7 @@ static int __power_supply_changed_work(struct device *dev, void *data)
 	int i;
 
 	for (i = 0; i < psy->num_supplicants; i++)
-		/*ÕâÀï±íÊ¾*/
+		/*这里表示*/
 		if (!strcmp(psy->supplied_to[i], pst->name)) {
 			if (pst->external_power_changed)
 				pst->external_power_changed(pst);

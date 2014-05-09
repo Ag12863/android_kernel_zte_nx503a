@@ -35,7 +35,7 @@ static int debug_device_info_mask = 1;
 module_param_named(debug_device_info_mask, debug_device_info_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 #define DBG_DEVICE_INFO(x...) do {if (debug_device_info_mask) pr_info(">>ZTEMT_DEVICE_INFO>>  " x); } while (0)
 
-//´ò¿ªµ÷ÊÔ½Ó¿Ú
+//打开调试接口
 #define DEBUG 
 #undef KERN_DEBUG
 #define KERN_DEBUG KERN_ERR
@@ -219,7 +219,7 @@ DBG_DEVICE_INFO("hw_id_uv.physical = %lld \n", adc_result.physical);
 int ztemt_get_device_index(char* result)
 {
 	int hw_id, project_id;
-	/* Ä¬ÈÏÎª½µ³É±¾°æ±¾*/
+	/* 默认为降成本版本*/
 	device_index_type device_index = 
 							DEVICE_01AMB_B_WTR1605_L_EMMC_16_32;
 	

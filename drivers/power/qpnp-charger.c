@@ -210,7 +210,7 @@ module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 #endif
 
 #ifdef CONFIG_ZTEMT_CHARGE
-//´ò¿ªµ÷ÊÔ½Ó¿Ú
+//打开调试接口
 #define DEBUG 
 #undef KERN_DEBUG
 #define KERN_DEBUG KERN_ERR
@@ -430,8 +430,8 @@ set_batt_temp(int temp)
     monitor_st.batt_temp = temp;
 }
 /*
-*  ¼ì²âµç³ØÎÂ¶ÈÊÇ·ñÒì³£
-*  µç³ØÎÂ¶ÈÊÇ·ñÔÚ[-6 , 48] ·¶Î§ÄÚ£»
+*  检测电池温度是否异常
+*  电池温度是否在[-6 , 48] 范围内；
 */
 #define BATT_TEMP_HIGH   530
 #define BATT_TEMP_LOW    -60
@@ -1574,7 +1574,7 @@ get_prop_battery_voltage_now(struct qpnp_chg_chip *chip)
 
 #ifdef CONFIG_ZTEMT_CHARGE
 /*
-* ³äµçÆ÷Êä³öµçÑ¹
+* 充电器输出电压
 */
 static int
 get_prop_charger_voltage_now(struct qpnp_chg_chip *chip)
@@ -1626,7 +1626,7 @@ get_prop_batt_health(struct qpnp_chg_chip *chip)
 	int rc;
 
 /*
-* µç³ØÎÂ¶ÈÔÚ[-6 , 48] ·¶Î§ÄÚ£»·ñÔòÒì³£
+* 电池温度在[-6 , 48] 范围内；否则异常
 */
     #ifdef CONFIG_ZTEMT_CHARGE
     if( is_chg_batt_temp_abnormal() || is_batt_temp_abnormal() )
@@ -1716,7 +1716,7 @@ get_prop_batt_status(struct qpnp_chg_chip *chip)
 						   /* Temperature Abnormal */
 	    if(is_chg_batt_temp_abnormal())
 	    	return POWER_SUPPLY_STATUS_NOT_CHARGING;
-			     /* ¼ÆËãsoc,ÔÚ¸Ãº¯ÊýÖÐÓÖ»áµ¼ÖÂµ÷ÓÃ¸Ãº¯Êý,µ¼ÖÂÇ¶Ì×µ÷ÓÃ*/
+			     /* 计算soc,在该函数中又会导致调用该函数,导致嵌套调用*/
 			     /*
 			 	chip->bms_psy->get_property(chip->bms_psy,
 							  POWER_SUPPLY_PROP_CAPACITY, &ret);*/
@@ -1826,8 +1826,8 @@ get_prop_capacity(struct qpnp_chg_chip *chip)
 }
 
 /**
-    ÎÊÌâÔ­Òò:µç³ØÎÂ¶ÈÒì³£Æ«¸ßµ¼ÖÂ¹Ø»ú
-    ½â¾ö·½·¨£ºµç³ØÎÂ¶È´ïµ½¹Ø»úÎÂ¶ÈÊ±£¬Ôø¼ÓPMICÎÂ¶ÈÅÐ¶Ï
+    问题原因:电池温度异常偏高导致关机
+    解决方法：电池温度达到关机温度时，曾加PMIC温度判断
 
 */
 #ifdef CONFIG_ZTEMT_CHARGE
@@ -1870,7 +1870,7 @@ get_prop_batt_temp(struct qpnp_chg_chip *chip)
 
 #ifdef CONFIG_ZTEMT_CHARGE
 /*
-* PMIC ÎÂ¶È
+* PMIC 温度
 */
 static int
 get_prop_pmic_temp(struct qpnp_chg_chip *chip)
@@ -2858,7 +2858,7 @@ qpnp_eoc_work(struct work_struct *work)
 			pr_debug("woke up too early\n");
 			qpnp_chg_enable_irq(&chip->chg_vbatdet_lo);
 		#ifdef CONFIG_ZTEMT_CHARGE
-		 //ÆÁ±ÎAC ³äµçÔÊÐíÐÝÃß
+		 //屏蔽AC 充电允许休眠
 	   #else			
 			goto stop_eoc;
 		#endif
@@ -3078,7 +3078,7 @@ qpnp_batt_power_set_property(struct power_supply *psy,
 	}
 
 #ifdef CONFIG_ZTEMT_CHARGE
-//µ¼ÖÂÏµÍ³¿¨¶Ù,ÔÝ²»µ÷ÓÃ
+//导致系统卡顿,暂不调用
 #endif
 	power_supply_changed(&chip->batt_psy);
 	return 0;
@@ -3918,7 +3918,7 @@ err1:
 #endif
 #ifdef CONFIG_ZTEMT_CHARGE
 /*
-* ´òÓ¡µ÷ÊÔÐÅÏ¢
+* 打印调试信息
 */
 static void 
 qpnp_print_debug_info(struct qpnp_chg_chip *chip ){
@@ -3943,7 +3943,7 @@ qpnp_print_debug_info(struct qpnp_chg_chip *chip ){
 }
 
 /*
-* µç³ØÎÂ¶È¼ì²â
+* 电池温度检测
 */
 #define CHG_TEMP_HIGH1   530
 #define CHG_TEMP_LOW1     -60
@@ -3975,8 +3975,8 @@ batt_monitor_worker(struct work_struct *work)
 	}
 
 	/*
-	*µç³ØÎÂ¶ÈÔÚ¡¾-5, 47¡¿Ö®¼äÆô¶¯³äµç¹¦ÄÜ¡£
-	  µç³ØÎÂ¶ÈÔÚ¡¾-6, 50¡¿Íâ²¿,Í£Ö¹³äµç¡£
+	*电池温度在【-5, 47】之间启动充电功能。
+	  电池温度在【-6, 50】外部,停止充电。
 	*/
 	if( batt_temperature > CHG_TEMP_LOW2 && batt_temperature < CHG_TEMP_HIGH2 &&
 		 is_chg_batt_temp_abnormal() ){
@@ -4003,12 +4003,12 @@ batt_monitor_worker(struct work_struct *work)
 }
 
 /*
-* ³äµçÆ÷ÔÚÎ»
+* 充电器在位
 */
 static void  
 check_start_monitor_work(struct qpnp_chg_chip *chip)
 {
-//ÉèÖÃ³äµçÆ÷×´Ì¬
+//设置充电器状态
    if( chip->usb_present ||chip->dc_present ) {
 		set_charger_status(1);
    	}

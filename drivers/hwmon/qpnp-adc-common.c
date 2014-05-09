@@ -335,8 +335,8 @@ static int32_t qpnp_adc_map_voltage_temp(const struct qpnp_vadc_map_pt *pts,
 }
 
 /**
-    ÎÊÌâÔ­Òò:µç³ØÎÂ¶ÈÒì³£Æ«¸ßµ¼ÖÂ¹Ø»ú
-    ½â¾ö·½·¨£ºµç³ØÎÂ¶È´ïµ½¹Ø»úÎÂ¶ÈÊ±£¬Ôø¼ÓPMICÎÂ¶ÈÅÐ¶Ï
+    问题原因:电池温度异常偏高导致关机
+    解决方法：电池温度达到关机温度时，曾加PMIC温度判断
 */	
 #ifdef CONFIG_ZTEMT_CHARGE
 extern void store_batt_therm_mv(int batt_temp_mv);

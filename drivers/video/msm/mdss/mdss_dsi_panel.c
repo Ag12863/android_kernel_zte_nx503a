@@ -43,7 +43,7 @@ extern struct mdss_dsi_ctrl_pdata *zte_mdss_dsi_ctrl;
 /*mayu,3.25*/
 #define MAX_LCD_BL_VAL   4095
 #define ZTE_MAX_LCD_BL_VAL 4095  //360 lm
-// 1072 100 lm default 58->1244 ,so 1720-500 ¼õÈ¥172×öµ÷Õû
+// 1072 100 lm default 58->1244 ,so 1720-500 减去172做调整
 #define ZTE_LCD_BL_FIX_MAX_VAL 1720
 #define ZTE_LCD_BL_FIX_MIN_VAL 500
 #define ZTE_LCD_BL_FIX_STEP    172
