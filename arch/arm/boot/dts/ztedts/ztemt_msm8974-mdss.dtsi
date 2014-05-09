@@ -223,4 +223,4 @@
 	};
 };
 
-/include/ "msm8974-mdss-panels.dtsi"
+/include/ "ztemt_msm8974-mdss-panels.dtsi"

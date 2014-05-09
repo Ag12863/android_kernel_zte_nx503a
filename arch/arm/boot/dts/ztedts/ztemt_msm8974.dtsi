@@ -10,7 +10,7 @@
  * GNU General Public License for more details.
  */
 
-/include/ "skeleton.dtsi"
+/include/ "../skeleton.dtsi"
 
 / {
 	model = "Qualcomm MSM 8974";
@@ -92,15 +92,15 @@
 	soc: soc { };
 };
 
-/include/ "msm8974-camera.dtsi"
-/include/ "msm8974-coresight.dtsi"
-/include/ "msm-gdsc.dtsi"
-/include/ "msm8974-ion.dtsi"
-/include/ "msm8974-gpu.dtsi"
-/include/ "msm8974-mdss.dtsi"
-/include/ "msm8974-smp2p.dtsi"
-/include/ "msm8974-bus.dtsi"
-/include/ "msm-rdbg.dtsi"
+/include/ "../msm8974-camera.dtsi"
+/include/ "../msm8974-coresight.dtsi"
+/include/ "../msm-gdsc.dtsi"
+/include/ "../msm8974-ion.dtsi"
+/include/ "../msm8974-gpu.dtsi"
+/include/ "ztemt_msm8974-mdss.dtsi"
+/include/ "../msm8974-smp2p.dtsi"
+/include/ "../msm8974-bus.dtsi"
+/include/ "../msm-rdbg.dtsi"
 
 &soc {
 	#address-cells = <1>;
@@ -234,19 +234,35 @@
 		interrupts = <0 109 0>;
 		status = "disabled";
 	};
-
+/*
 	serial@f995e000 {
 		compatible = "qcom,msm-lsuart-v14";
 		reg = <0xf995e000 0x1000>;
 		interrupts = <0 114 0>;
 		status = "disabled";
 	};
+*/
+	// ADDED BY ZTEMT ZhuBing
+	// Open the uart0 and uatr1 and confirm the num
+	serial@f991d000 {
+		compatible = "qcom,msm-lsuart-v14";
+		reg = <0xf991d000 0x1000>;
+		interrupts = <0 107 0>;
+		status = "ok";
+
+		qcom,msm-bus,name = "serial_uart1";
+		qcom,msm-bus,num-cases = <2>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+				<86 512 0 0>,
+				<86 512 500 800>;
+	};
 
 	blsp1_uart1: serial@f991e000 {
 		compatible = "qcom,msm-lsuart-v14";
 		reg = <0xf991e000 0x1000>;
 		interrupts = <0 108 0>;
-		status = "disabled";
+		status = "ok";
 
 		qcom,msm-bus,name = "serial_uart2";
 		qcom,msm-bus,num-cases = <2>;
@@ -255,6 +271,7 @@
 				<86 512 0 0>,
 				<86 512 500 800>;
 	};
+	// ADDED BY ZTEMT ZhuBing END
 
 	usb_otg: usb@f9a55000 {
 		compatible = "qcom,hsusb-otg";
@@ -359,13 +376,13 @@
 		reg-names = "core_mem", "dml_mem", "bam_mem";
 		interrupts = <0 125 0>, <0 220 0>;
 		interrupt-names = "core_irq", "bam_irq";
-		vdd-supply = <&pm8941_l21>;
+		vdd-supply = <&pm8941_l13>;
 		vdd-io-supply = <&pm8941_l13>;
 
-		qcom,vdd-voltage-level = <2950000 2950000>;
+		qcom,vdd-voltage-level = <1800000 1800000>;
 		qcom,vdd-current-level = <9000 800000>;
 
-		qcom,vdd-io-voltage-level = <1800000 2950000>;
+		qcom,vdd-io-voltage-level = <1800000 1800000>;
 		qcom,vdd-io-current-level = <6 22000>;
 
 		qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
@@ -744,7 +761,7 @@
 
 			qcom,cdc-micbias-ldoh-v = <0x3>;
 			qcom,cdc-micbias-cfilt1-mv = <1800>;
-			qcom,cdc-micbias-cfilt2-mv = <2700>;
+			qcom,cdc-micbias-cfilt2-mv = <1800>;
 			qcom,cdc-micbias-cfilt3-mv = <2700>;
 			qcom,cdc-micbias1-cfilt-sel = <0x0>;
 			qcom,cdc-micbias2-cfilt-sel = <0x1>;
@@ -753,8 +770,53 @@
 			qcom,cdc-mclk-clk-rate = <9600000>;
 			qcom,cdc-slim-ifd = "taiko-slim-ifd";
 			qcom,cdc-slim-ifd-elemental-addr = [00 00 A0 00 17 02];
-			qcom,cdc-dmic-sample-rate = <4800000>;
+			qcom,cdc-dmic-sample-rate = <2400000>;
 		};
+		es325_codec_gen0{
+			compatible = "adnc,es325-codec-gen0";
+			elemental-addr = [00 01 02 00 BE 02];
+
+			adnc,es325-codec-gen0 = "es325-codec-gen0";
+			adnc,es325-codec-gen0-eaddr = [00 01 02 00 BE 02];
+
+			adnc,reset-gpio  = <&msmgpio 56 0>; /* DEFINED BY CUSTOMER */
+			adnc,wakeup-gpio = <&msmgpio 55 0>; /* DEFINED BY CUSTOMER */
+			adnc,power-gpio  = <&msmgpio 92 0>;
+
+			adnc,es325-mclk-gpios = <&pm8941_gpios 16 0>;	/* DEFINED BY audience */
+			es325-mclk-clk = <&pm8941_clkdiv2>;
+			adnc,es325-mclk-clk-freq = <19200000>;
+
+			es325_vdig-supply = <&pm8941_s3>;
+			adnc,es325-vreg-name = "es325_vdig";
+			adnc,es325-vreg-type = <0>;
+			adnc,es325-vreg-min-voltage = <1800000>;
+			adnc,es325-vreg-max-voltage = <1800000>;
+			adnc,es325-vreg-op-mode = <105000>;
+		};
+		es325_codec_intf{
+			compatible = "adnc,es325-codec-intf";
+			elemental-addr = [00 00 02 00 BE 02];
+
+			adnc,es325-codec-intf = "es325-codec-intf";
+			adnc,es325-codec-intf-eaddr = [00 01 02 00 BE 02];
+
+			adnc,reset-gpio  = <&msmgpio 56 0>; /* DEFINED BY CUSTOMER */
+			adnc,wakeup-gpio = <&msmgpio 55 0>; /* DEFINED BY CUSTOMER */		
+			adnc,power-gpio  = <&msmgpio 92 0>;
+
+			adnc,es325-mclk-gpios = <&pm8941_gpios 16 0>;	/* DEFINED BY audience */
+			es325-mclk-clk = <&pm8941_clkdiv2>;
+			adnc,es325-mclk-clk-freq = <19200000>;
+
+			es325_vdig-supply = <&pm8941_s3>;
+			adnc,es325-vreg-name = "es325_vdig";
+			adnc,es325-vreg-type = <0>;
+			adnc,es325-vreg-min-voltage = <1800000>;
+			adnc,es325-vreg-max-voltage = <1800000>;
+			adnc,es325-vreg-op-mode = <105000>;
+		};
+	
 	};
 
 	sound {
@@ -849,7 +911,7 @@
 		qcom,scl-gpio = <&msmgpio 3 0>;
 		qcom,sda-gpio = <&msmgpio 2 0>;
 		qcom,master-id = <86>;
-		status = "disabled";
+		status = "ok";
 	};
 
 	i2c_2: i2c@f9924000 {
@@ -866,6 +928,24 @@
 		qcom,master-id = <86>;
 		qcom,scl-gpio = <&msmgpio 7 0>;
 		qcom,sda-gpio = <&msmgpio 6 0>;
+	};
+
+	// Add the i2c-6
+	i2c_6: i2c@f9928000 {
+		cell-index = <6>;
+		compatible = "qcom,i2c-qup";
+		reg = <0xf9928000 0x1000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		interrupts = <0 100 0>;
+		interrupt-names = "qup_err_intr";
+		qcom,i2c-bus-freq = <100000>;
+		qcom,i2c-src-freq = <50000000>;
+		qcom,master-id = <86>;
+		qcom,scl-gpio = <&msmgpio 30 0>;
+		qcom,sda-gpio = <&msmgpio 29 0>;
+		status = "ok";
 	};
 
 	spi_0: spi@f9923000 { /* BLSP1 QUP1 */
@@ -2198,11 +2278,11 @@
 		compatible = "qcom,msm-thermal";
 		qcom,sensor-id = <5>;
 		qcom,poll-ms = <250>;
-		qcom,limit-temp = <60>;
+		qcom,limit-temp = <80>;
 		qcom,temp-hysteresis = <10>;
-		qcom,freq-step = <2>;
+		qcom,freq-step = <1>;
 		qcom,freq-control-mask = <0xf>;
-		qcom,core-limit-temp = <80>;
+		qcom,core-limit-temp = <88>;
 		qcom,core-temp-hysteresis = <10>;
 		qcom,core-control-mask = <0xe>;
 		qcom,hotplug-temp = <110>;
@@ -2278,6 +2358,91 @@
 				<84 512 0 0>,
 				<84 512 500 800>;
 	};
+	
+	uart8: uart@f995e000 { 
+		compatible = "qcom,msm-hsuart-v14";
+		status = "ok";
+		reg = <0xf995e000 0x1000>,
+			<0xf9944000 0x19000>;   
+		reg-names = "core_mem", "bam_mem";
+		interrupts = <0 114 0>, <0 239 0>;
+		interrupt-names = "core_irq", "bam_irq";
+
+		qcom,tx-gpio = <&msmgpio 45 0x00>;
+		qcom,rx-gpio = <&msmgpio 46 0x00>;
+		qcom,cts-gpio = <&msmgpio 47 0x00>;
+		qcom,rfr-gpio = <&msmgpio 48 0x00>;
+
+		qcom,bam-tx-ep-pipe-index = <2>;
+		qcom,bam-rx-ep-pipe-index = <3>;
+		
+		qcom,msm-bus,name = "uart8";
+		qcom,msm-bus,num-cases = <2>;
+		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+				<84 512 0 0>,
+				<84 512 500 800>; 
+	};
+/*
+	uart9: uart@f995f000 { 
+		compatible = "qcom,msm-hsuart-v14";
+		status = "ok";
+		reg = <0xf995f000 0x1000>,
+			<0xf9944000 0x19000>;   
+		reg-names = "core_mem", "bam_mem";
+		interrupts = <0 115 0>, <0 239 0>;
+		interrupt-names = "core_irq", "bam_irq";
+
+		qcom,bam-tx-ep-pipe-index = <4>;
+		qcom,bam-rx-ep-pipe-index = <5>;
+		
+		qcom,msm-bus,name = "uart9";
+		qcom,msm-bus,num-cases = <2>;
+		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+				<84 512 0 0>,
+				<84 512 500 800>;
+	};
+*/
+
+/*	uart10: uart@f9960000 { 
+		compatible = "qcom,msm-hsuart-v14";
+		status = "disabled";
+		reg = <0xf9960000 0x1000>,
+			<0xf9944000 0x19000>;   
+		reg-names = "core_mem", "bam_mem";
+		interrupts = <0 116 0>, <0 239 0>;
+		interrupt-names = "core_irq", "bam_irq";
+
+		qcom,tx-gpio = <&msmgpio 53 0x00>;
+		qcom,rx-gpio = <&msmgpio 54 0x00>;
+		qcom,cts-gpio = <&msmgpio 55 0x00>;
+		qcom,rfr-gpio = <&msmgpio 56 0x00>;
+
+		qcom,bam-tx-ep-pipe-index = <6>;
+		qcom,bam-rx-ep-pipe-index = <7>;
+		
+		qcom,msm-bus,name = "uart10";
+		qcom,msm-bus,num-cases = <2>;
+		qcom,msm-bus,active-only = <0>;
+		qcom,msm-bus,num-paths = <1>;
+		qcom,msm-bus,vectors-KBps =
+				<84 512 0 0>,
+				<84 512 500 800>; 
+	};*/
+	
+	
+	bt_bcm4339_sleep {
+		compatible = "qca,bcm4339_bluesleep";
+		host-wake-gpio = <&msmgpio 44 0>;
+		ext-wake-gpio = <&msmgpio 43 0>;
+		interrupt-parent = <&msmgpio>;
+		interrupts = <44 1>;
+		interrupt-names = "host_wake";
+	};
+	/* broadcom 4339 end */
 
 	qcom,smem@fa00000 {
 		compatible = "qcom,smem";

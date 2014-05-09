@@ -10,8 +10,8 @@
  * GNU General Public License for more details.
  */
 
-/include/ "msm8974-camera-sensor-mtp.dtsi"
-/include/ "msm8974-leds.dtsi"
+/include/ "ztemt_msm8974-camera-sensor-mtp.dtsi"
+/include/ "ztemt_msm8974-leds.dtsi"
 
 / {
 	aliases {
@@ -20,24 +20,77 @@
 };
 
 &soc {
-	serial@f991e000 {
+	serial@f991d000 {
+		compatible = "qcom,msm-lsuart-v14";
+		reg = <0xf991d000 0x1000>;
+		interrupts = <0 107 0>;
 		status = "ok";
 	};
 
+	// ADDED BY ZTEMT ZhuBing
+	// add the uatr1 and confirm the num
+	serial@f991e000 {
+		compatible = "qcom,msm-lsuart-v14";
+		reg = <0xf991e000 0x1000>;
+		interrupts = <0 108 0>;
+		status = "ok";
+	};
+	// ADDED BY ZTEMT ZhuBing END
+
 	qcom,mdss_dsi@fd922800 {
-		qcom,dsi-pref-prim-pan = <&dsi_tosh_720_vid>;
+		qcom,dsi-pref-prim-pan = <&dsi_sharp_1080_vid>;
 	};
 
 	qcom,mdss_mdp@fd900000 {
 		qcom,mdss-pref-prim-intf = "dsi";
-		batfet-supply = <&pm8941_chg_batif>;
+		// batfet-supply = <&pm8941_chg_batif>;  qualcomm case ID 01353411/01330511
 	};
 
 	qcom,hdmi_tx@fd922100 {
-		status = "disabled";
+		status = "ok";
 	};
 
+	i2c@f9923000 {
+		anx7808_i2c_adapter@72 {
+			status = "okay";
+			compatible = "slimport,anx7808_i2c_adapter";
+			reg = <0x72>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <27 0x3>;
+			anx7808-pdown-gpio = <&msmgpio 26 0x00>;
+			anx7808-reset-gpio = <&msmgpio 78 0x00>;
+			anx7808-int-gpio = <&msmgpio 102 0x00>;
+			anx7808-cbl-gpio = <&msmgpio 27 0x00>;
+			anx7808-v10-gpio = <&msmgpio 14 0x00>;
+			smps3a-supply = <&pm8941_s3>;
+			vreg_l18-supply = <&pm8941_l18>;
+		};
+	};
 	i2c@f9924000 {
+		/*ZTEMT Added by luochangyang, 2013/12/19*/
+		cyttsp4_i2c_adapter@24 {
+			compatible = "cypress,cyttsp4_i2c_adapter";
+			reg = <0x24>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <61 0x2>;
+			vdd_ana-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			cypress,reset-gpio = <&msmgpio 60 0x00>;
+			cypress,irq-gpio = <&msmgpio 61 0x00>;
+		};
+
+		synaptics_dsx_i2c@22 {
+			compatible = "synaptics_dsx_i2c,rmi4";
+			reg = <0x22>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <61 0x2>;
+			vdd_ana-supply = <&pm8941_l18>;
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			synaptics,reset-gpio = <&msmgpio 60 0x00>;
+			synaptics,irq-gpio = <&msmgpio 61 0x00>;
+			synaptics,regulator_en;
+		};
+        /*ZTEMT END*/
 		synaptics@20 {
 			compatible = "synaptics,rmi4";
 			reg = <0x20>;
@@ -143,6 +196,35 @@
 		qcom,key-codes = <158 139 102 217>;
 	};
 
+	i2c@f9928000 {
+		nxp_i2c_adapter@28 {
+			compatible = "nxp,i2c_adapter";
+			reg = <0x28>;
+			interrupt-parent = <&msmgpio>;
+			//changed by chengdongsheng 20130904 for NFC_IQR chaned to GPIO80
+			interrupts = <80 0x2>;
+			//interrupts = <68 0x2>;
+			nxp,updata-gpio = <&msmgpio 13 0x00>;
+			nxp,ven-gpio = <&msmgpio 85 0x00>;
+			//changed by chengdongsheng 20130904 for NFC_IQR chaned to GPIO80
+			nxp,irq-gpio = <&msmgpio 80 0x00>;
+			//nxp,irq-gpio = <&msmgpio 68 0x00>;
+		};
+	    	tps65132@3e {
+			compatible = "tps,tps65132_i2c_adapter";
+			reg = <0x3e>;
+			interrupt-parent = <&msmgpio>;
+	        };
+		// ADDED BY ZTEMT ZhuBing
+		// Add the i2c-6 and add the humidity/tempeturate sensor
+	    	shtc1_i2c_adapter@70 {
+	                status = "okay";
+	                reg = <0x70>;
+	                compatible = "sencirion,shtc1";
+	                interrupt-parent = <&msmgpio>;
+	        };
+		// ADDED BY ZTEMT ZhuBing END
+	};
 	i2c@f9967000 {
 		isa1200@48 {
 			status = "okay";
@@ -164,6 +246,54 @@
 				regulator-max-microamp = <9360>;
 			};
 		};
+		drv2605@5a {
+			reg = <0x5a>;
+			compatible = "immersion,drv2605";
+			immersion,gpio-enable = <&msmgpio 86 0x00>;
+			immersion,actuator {
+				actuator,type = <0x01>;	/* 0:ERM 1:LRA */
+				actuator,effect-bank = <0x06>; /* LIBRARY_F */
+				actuator,loop = <0x01>; /* 0:OPEN_LOOP 1:CLOSE_LOOP */
+				actuator,rated-vol = <0x38>;
+				actuator,over-drive-vol = <0x72>;
+			};
+			immersion,audio2haptics {
+				a2h,min-input = <0x19>;
+				a2h,max-input = <0xff>;
+				a2h,min-output = <0x19>;
+				a2h,max-output = <0xff>;
+			};
+		};
+		aw9106b_i2c_adapter@5b {
+			compatible = "aw,9106b";
+			reg = <0x5b>;
+			interrupt-parent = <&msmgpio>;
+		};		
+
+		// ADDED BY ZTEMT ZhuBing
+		// add the als/prox/gesture sensor and IR-remote control
+	    	ams-sensor_i2c_adapter@39 {
+	                status = "okay";
+	                reg = <0x39>;
+	                compatible = "ams,ams-sensor";
+	                interrupt-parent = <&msmgpio>;
+	                tmg3993,irq-gpio = <&msmgpio 74 0x00>;
+	        };
+
+	        maxq616_i2c_adapter@11 {
+	                status = "okay";
+	                reg = <0x11>;
+	                compatible = "uei,maxq616";
+					vdd-chip-supply = <&pm8941_l21>;
+					vdd-led-supply  = <&pm8941_lvs2>;
+	        };
+	        
+	        sensor_common_i2c_adapter@22 {
+	                status = "okay";
+	                reg = <0x22>;
+	                compatible = "zte,sensor_common";
+	        };
+		// ADDED BY ZTEMT ZhuBing END
 	};
 
 	gpio_keys {
@@ -190,9 +320,17 @@
 
 		vol_up {
 			label = "volume_up";
-			gpios = <&pm8941_gpios 5 0x1>;
+			gpios = <&pm8941_gpios 2 0x1>;
 			linux,input-type = <1>;
 			linux,code = <115>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+		};
+		vol_down {
+			label = "volume_down";
+			gpios = <&pm8941_gpios 5 0x1>;
+			linux,input-type = <1>;
+			linux,code = <114>;
 			gpio-key,wakeup;
 			debounce-interval = <15>;
 		};
@@ -213,14 +351,53 @@
 
 	sound {
 		qcom,model = "msm8974-taiko-mtp-snd-card";
+		qcom,audio-routing =
+			"RX_BIAS", "MCLK",
+			"LDO_H", "MCLK",
+			"AMIC1", "MIC BIAS1 Internal1",
+			"MIC BIAS1 Internal1", "Handset Mic",
+			"AMIC2", "MIC BIAS2 External",
+			"MIC BIAS2 External", "Headset Mic",
+			"AMIC3", "MIC BIAS2 External",
+			"MIC BIAS2 External", "ANCRight Headset Mic",
+			"AMIC4", "MIC BIAS2 External",
+			"MIC BIAS2 External", "ANCLeft Headset Mic",
+			"DMIC1", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Digital Mic1",
+			"DMIC2", "MIC BIAS1 External",
+			"MIC BIAS1 External", "Digital Mic2",
+			"DMIC3", "MIC BIAS3 External",
+			"MIC BIAS3 External", "Digital Mic3",
+			"DMIC4", "MIC BIAS3 External",
+			"MIC BIAS3 External", "Digital Mic4",
+			"DMIC5", "MIC BIAS4 External",
+			"MIC BIAS4 External", "Digital Mic5",
+			"DMIC6", "MIC BIAS4 External",
+			"MIC BIAS4 External", "Digital Mic6",
+			"Lineout_1 amp", "LINEOUT1",
+			"Lineout_3 amp", "LINEOUT3";
+
+		qcom,hdmi-audio-rx;
+		qcom,ext-ult-lo-amp-gpio = <&pm8941_gpios 6 0>;
 		qcom,cdc-micbias2-headset-only;
 		qcom,mbhc-audio-jack-type = "6-pole-jack";
 	};
 };
 
+&slim_msm {
+	taiko_codec {
+		/* If boot isn't available, vph_pwr_vreg can be used instead */
+		cdc-vdd-spkdrv-supply = <&pm8941_boost>;
+		qcom,cdc-vdd-spkdrv-voltage = <5000000 5000000>;
+		qcom,cdc-vdd-spkdrv-current = <1250000>;
+
+		qcom,cdc-on-demand-supplies = "cdc-vdd-spkdrv";
+	};
+};
+
 &pm8941_lsid1 {
 	qcom,leds@d800 {
-		status = "okay";
+	/*	status = "okay";
 		qcom,wled_0 {
 			label = "wled";
 			linux,name = "wled:backlight";
@@ -236,7 +413,7 @@
 			qcom,ovp-val = <2>;
 			qcom,num-strings = <3>;
 			qcom,id = <0>;
-		};
+		};*/
 	};
 
 	qcom,leds@d900 {
@@ -309,7 +486,7 @@
 
 	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
 	qcom,pad-pull-off = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
-	qcom,pad-drv-on = <0x4 0x4 0x4>; /* 10mA, 10mA, 10mA */
+	qcom,pad-drv-on = <0x2 0x2 0x2>; /* 10mA, 10mA, 10mA */
 	qcom,pad-drv-off = <0x0 0x0 0x0>; /* 2mA, 2mA, 2mA */
 
 	qcom,nonremovable;
@@ -328,13 +505,13 @@
 	interrupt-names = "hc_irq", "pwr_irq", "status_irq";
 	cd-gpios = <&msmgpio 62 0x1>;
 
-	vdd-supply = <&pm8941_l21>;
+	vdd-supply = <&pm8941_l13>;
 	vdd-io-supply = <&pm8941_l13>;
 
-	qcom,vdd-voltage-level = <2950000 2950000>;
+        qcom,vdd-voltage-level = <1800000 1800000>;
 	qcom,vdd-current-level = <9000 800000>;
 
-	qcom,vdd-io-voltage-level = <1800000 2950000>;
+        qcom,vdd-io-voltage-level = <1800000 1800000>;
 	qcom,vdd-io-current-level = <6 22000>;
 
 	qcom,pad-pull-on = <0x0 0x3 0x3>; /* no-pull, pull-up, pull-up */
@@ -357,7 +534,7 @@
 };
 
 &sdhc_1 {
-	qcom,pad-drv-on = <0x7 0x4 0x4>; /* 16mA, 10mA, 10mA */
+	qcom,pad-drv-on = <0x2 0x2 0x2>; /* 16mA, 10mA, 10mA */
 };
 
 &sdhc_2 {
@@ -386,6 +563,9 @@
 	};
 };
 
+/* ztemt BMS 
+  *                 CONFIG_ZTEMT_CHARGE
+*/
 &pm8941_bms {
 	qcom,enable-fcc-learning;
 	qcom,min-fcc-learning-soc = <20>;
@@ -396,9 +576,12 @@
 	qcom,battery-data = <&mtp_batterydata>;
 };
 
+/*  ztemt Charger
+  *                 CONFIG_ZTEMT_CHARGE
+*/
 &pm8941_chg {
 	status = "ok";
-	qcom,charging-disabled;
+	/* qcom,charging-disabled; */
 	qcom,battery-data = <&mtp_batterydata>;
 
 	qcom,chgr@1000 {
@@ -438,9 +621,10 @@
 	};
 
 	gpio@c100 { /* GPIO 2 */
-		qcom,mode = <0>;        /* QPNP_PIN_MODE_DIG_IN */
-		qcom,pull = <0>;        /* QPNP_PIN_PULL_UP_30  */
-		qcom,master-en = <1>;
+		qcom,mode = <0>;
+		qcom,pull = <0>;
+		qcom,vin-sel = <2>;
+		qcom,src-sel = <0>;
 	};
 
 	gpio@c200 { /* GPIO 3 */
@@ -460,11 +644,10 @@
 	};
 
 	gpio@c400 { /* GPIO 5 */
-		qcom,mode = <0>;        /* QPNP_PIN_MODE_DIG_IN */
-		qcom,pull = <0>;        /* QPNP_PIN_PULL_UP_30  */
-		qcom,vin-sel = <2>;     /* QPNP_PIN_VIN2  */
-		qcom,src-sel = <0>;	/* QPNP_PIN_SEL_FUNC_CONSTANT */
-		qcom,master-en = <1>;
+		qcom,mode = <0>;
+		qcom,pull = <0>;
+		qcom,vin-sel = <2>;
+		qcom,src-sel = <0>;
 	};
 
 	gpio@c500 { /* GPIO 6 */
@@ -543,7 +726,7 @@
 		qcom,pull = <5>;
 		qcom,vin-sel = <2>;
 		qcom,out-strength = <3>;
-		qcom,src-sel = <3>;       /* QPNP_PIN_SEL_FUNC_2  */
+		qcom,src-sel = <2>;       /* QPNP_PIN_SEL_FUNC_2  */
 		qcom,master-en = <1>;
 	};
 
@@ -551,6 +734,13 @@
 	};
 
 	gpio@d100 { /* GPIO 18 */
+		qcom,mode = <1>;
+		qcom,output-type = <0>;
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <3>;
+		qcom,master-en = <1>;
 	};
 
 	gpio@d200 { /* GPIO 19 */
@@ -704,14 +894,6 @@
 	};
 };
 
-&slim_msm {
-	taiko_codec {
-		qcom,cdc-micbias1-ext-cap;
-		qcom,cdc-micbias2-ext-cap;
-		qcom,cdc-micbias3-ext-cap;
-		qcom,cdc-micbias4-ext-cap;
-	};
-};
 
 &spi_epm {
 	epm-adc@0 {
@@ -730,6 +912,10 @@
 				50>;
 		qcom,channel-type = <0x1540>;
 	};
+};
+
+&dsi_sharp_1080_vid {
+       qcom,cont-splash-enabled;
 };
 
 &dsi_tosh_720_vid {
