@@ -405,7 +405,7 @@ static void mdss_dsi_panel_bl_ctrl(struct mdss_panel_data *pdata,
 		break;
 	case BL_DCS_CMD:
 #ifdef CONFIG_ZTEMT_MIPI_1080P_R63311_SHARP_IPS
-    sharp_r63311_set_backlight(ctrl_pdata, bl_level);
+		sharp_r63311_set_backlight(ctrl_pdata, bl_level);
 #else
 		mdss_dsi_panel_bklt_dcs(ctrl_pdata, bl_level);
 #endif

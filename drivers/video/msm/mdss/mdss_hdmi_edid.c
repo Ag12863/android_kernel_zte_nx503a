@@ -292,18 +292,7 @@ static ssize_t hdmi_edid_sysfs_rda_modes(struct device *dev,
 	return ret;
 } /* hdmi_edid_sysfs_rda_modes */
 static DEVICE_ATTR(edid_modes, S_IRUGO, hdmi_edid_sysfs_rda_modes, NULL);
-extern enum SP_LINK_BW slimport_get_link_bw(void);
-static ssize_t hdmi_edid_sysfs_sp_band_width(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	ssize_t ret = 0;
 
-	buf[0] = 0;
-	ret += snprintf(buf+ret, PAGE_SIZE-ret, "%d", slimport_get_link_bw());
-	printk("%s: buf %s\n", __func__, buf);
-	return ret;
-}
-static DEVICE_ATTR(sp_band_width, S_IRUGO, hdmi_edid_sysfs_sp_band_width, NULL);
 static ssize_t hdmi_edid_sysfs_rda_physical_address(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
@@ -411,7 +400,6 @@ static struct attribute *hdmi_edid_fs_attrs[] = {
 	&dev_attr_scan_info.attr,
 	&dev_attr_edid_3d_modes.attr,
 	&dev_attr_edid_raw_data.attr,
-	&dev_attr_sp_band_width.attr,
 	NULL,
 };
 
