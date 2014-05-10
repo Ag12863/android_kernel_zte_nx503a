@@ -1536,16 +1536,11 @@ static int venus_hfi_sys_set_idle_message(struct venus_hfi_device *device,
 	int enable)
 {
 	u8 packet[VIDC_IFACEQ_VAR_SMALL_PKT_SIZE];
-	u32 hw_version;
 	struct hfi_cmd_sys_set_property_packet *pkt =
 		(struct hfi_cmd_sys_set_property_packet *) &packet;
-	hw_version = venus_hfi_read_register(device, VIDC_WRAPPER_HW_VERSION);
-	dprintk(VIDC_DBG, "Venus HW version: 0x%x\n", hw_version);
-	if ((hw_version & 0xFFFF0000) != 0x10030000) {
-		create_pkt_cmd_sys_idle_indicator(pkt, enable);
-		if (venus_hfi_iface_cmdq_write(device, pkt))
-			return -ENOTEMPTY;
-	}
+	create_pkt_cmd_sys_idle_indicator(pkt, enable);
+	if (venus_hfi_iface_cmdq_write(device, pkt))
+		return -ENOTEMPTY;
 	return 0;
 }
 
@@ -1660,7 +1655,6 @@ static int venus_hfi_get_q_size(struct venus_hfi_device *dev,
 	struct vidc_iface_q_info *q_info;
 	u32 write_ptr, read_ptr;
 	u32 rc = 0;
-
 	if (q_index >= VIDC_IFACEQ_NUMQ) {
 		dprintk(VIDC_ERR, "Invalid q index: %d\n", q_index);
 		return -ENOENT;
@@ -1668,11 +1662,10 @@ static int venus_hfi_get_q_size(struct venus_hfi_device *dev,
 
 	q_info = &dev->iface_queues[q_index];
 	if (!q_info) {
-		dprintk(VIDC_ERR, "cannot read shared Q's\n");
+		dprintk(VIDC_ERR, "cannot read shared Q's");
 		return -ENOENT;
 	}
-
-	queue = (struct hfi_queue_header *)q_info->q_hdr;
+	queue = (struct hfi_queue_header *) q_info->q_hdr;
 	if (!queue) {
 		dprintk(VIDC_ERR, "queue not present");
 		return -ENOENT;
@@ -3121,14 +3114,14 @@ static int venus_hfi_alloc_ocmem(void *dev, unsigned long size)
 		return -EINVAL;
 	}
 	ocmem_buffer = device->resources.ocmem.buf;
-	if (!ocmem_buffer ||
-		ocmem_buffer->len < size) {
+	if (!ocmem_buffer || ocmem_buffer->len < size) {
 		ocmem_buffer = ocmem_allocate(OCMEM_VIDEO, size);
 		if (IS_ERR_OR_NULL(ocmem_buffer)) {
 			dprintk(VIDC_ERR,
 				"ocmem_allocate_nb failed: %d\n",
 				(u32) ocmem_buffer);
 			rc = -ENOMEM;
+			goto ocmem_set_failed;
 		}
 		device->resources.ocmem.buf = ocmem_buffer;
 		rc = venus_hfi_set_ocmem(device, ocmem_buffer);
