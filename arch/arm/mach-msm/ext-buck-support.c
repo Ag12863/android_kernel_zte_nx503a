@@ -75,40 +75,38 @@ static int msm_ext_buck_probe(struct platform_device *pdev)
 {
 	char *key = NULL;
 	int gpio_num;
-	int settling_time_us;
+	int settling_time;
 	int ret = 0;
 
 	key = "qcom,gpio-num";
 	ret = of_property_read_u32(pdev->dev.of_node, key, &gpio_num);
 	if (ret) {
-		pr_err("%s: Cannot read %s from dt (ret:%d)\n",
-						__func__, key, ret);
+		pr_debug("%s: Cannot read %s from dt", __func__, key);
 		return ret;
 	}
 
-	key = "qcom,settling-time-us";
+	key = "qcom,settling-time";
 	ret = of_property_read_u32(pdev->dev.of_node, key,
-					&settling_time_us);
+					&settling_time);
 	if (ret) {
-		pr_err("%s: Cannot read %s from dt (ret:%d)\n",
-						__func__, key, ret);
+		pr_debug("%s: Cannot read %s from dt", __func__, key);
 		return ret;
 	}
 
-	ret = msm_send_ext_buck_votes(gpio_num, settling_time_us);
+	ret = msm_send_ext_buck_votes(gpio_num, settling_time);
 
 	return ret;
 }
 
 static struct of_device_id msm_ext_buck_table[] = {
-	{.compatible = "qcom,ext-buck-control"},
+	{.compatible = "qcom,ext-buck-support"},
 	{},
 };
 
 static struct platform_driver msm_ext_buck_driver = {
 	.probe = msm_ext_buck_probe,
 	.driver = {
-		.name = "ext-buck-control",
+		.name = "ext-buck-support",
 		.owner = THIS_MODULE,
 		.of_match_table = msm_ext_buck_table,
 	},
