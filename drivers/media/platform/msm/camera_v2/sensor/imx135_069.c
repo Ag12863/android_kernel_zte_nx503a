@@ -11,8 +11,8 @@
  *
  */
 #include "msm_sensor.h"
-#define IMX135_SENSOR_NAME "imx135"
-DEFINE_MSM_MUTEX(imx135_mut);
+#define IMX135_SENSOR_NAME "imx135_069"
+DEFINE_MSM_MUTEX(imx135_069_mut);
 
 static struct msm_sensor_ctrl_t imx135_s_ctrl;
 
@@ -76,7 +76,7 @@ static struct msm_sensor_power_setting imx135_power_setting[] = {
 	{
 		.seq_type = SENSOR_CLK,
 		.seq_val = SENSOR_CAM_MCLK,
-		.config_val = 24000000,
+		.config_val = 0,
 		.delay = 1,
 	},
 	{
@@ -120,7 +120,7 @@ static struct msm_camera_i2c_client imx135_sensor_i2c_client = {
 };
 
 static const struct of_device_id imx135_dt_match[] = {
-	{.compatible = "qcom,imx135", .data = &imx135_s_ctrl},
+	{.compatible = "qcom,imx135_069", .data = &imx135_s_ctrl},
 	{}
 };
 
@@ -128,7 +128,7 @@ MODULE_DEVICE_TABLE(of, imx135_dt_match);
 
 static struct platform_driver imx135_platform_driver = {
 	.driver = {
-		.name = "qcom,imx135",
+		.name = "qcom,imx135_069",
 		.owner = THIS_MODULE,
 		.of_match_table = imx135_dt_match,
 	},
@@ -143,7 +143,7 @@ static int32_t imx135_platform_probe(struct platform_device *pdev)
 	return rc;
 }
 
-static int __init imx135_init_module(void)
+static int __init imx135_069_init_module(void)
 {
 	int32_t rc = 0;
 	pr_info("%s:%d\n", __func__, __LINE__);
@@ -155,7 +155,7 @@ static int __init imx135_init_module(void)
 	return i2c_add_driver(&imx135_i2c_driver);
 }
 
-static void __exit imx135_exit_module(void)
+static void __exit imx135_069_exit_module(void)
 {
 	pr_info("%s:%d\n", __func__, __LINE__);
 	if (imx135_s_ctrl.pdev) {
@@ -168,17 +168,14 @@ static void __exit imx135_exit_module(void)
 
 static struct msm_sensor_ctrl_t imx135_s_ctrl = {
 	.sensor_i2c_client = &imx135_sensor_i2c_client,
-#ifdef CONFIG_ZTEMT_CAMERA_OIS
-	.zte_otp_enable = true,
-#endif
 	.power_setting_array.power_setting = imx135_power_setting,
 	.power_setting_array.size = ARRAY_SIZE(imx135_power_setting),
-	.msm_sensor_mutex = &imx135_mut,
+	.msm_sensor_mutex = &imx135_069_mut,
 	.sensor_v4l2_subdev_info = imx135_subdev_info,
 	.sensor_v4l2_subdev_info_size = ARRAY_SIZE(imx135_subdev_info),
 };
 
-module_init(imx135_init_module);
-module_exit(imx135_exit_module);
-MODULE_DESCRIPTION("imx135");
+module_init(imx135_069_init_module);
+module_exit(imx135_069_exit_module);
+MODULE_DESCRIPTION("imx135_069");
 MODULE_LICENSE("GPL v2");
