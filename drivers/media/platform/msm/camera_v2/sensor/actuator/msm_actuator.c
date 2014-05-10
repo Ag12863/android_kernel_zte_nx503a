@@ -27,6 +27,14 @@ DEFINE_MSM_MUTEX(msm_actuator_mutex);
 #define CDBG(fmt, args...) pr_debug(fmt, ##args)
 #endif
 
+/*ZTEMT: Jinghongliang Add for Read AF OTP  ---Start*/
+#ifdef CONFIG_ZTEMT_AD5816
+extern unsigned short af_start_value;
+extern unsigned short af_infinity_value;
+extern unsigned short af_macro_value;
+#endif
+/*ZTEMT: Jinghongliang Add for Read AF OTP  ---End*/
+
 static struct msm_actuator msm_vcm_actuator_table;
 static struct msm_actuator msm_piezo_actuator_table;
 
@@ -68,6 +76,60 @@ static int32_t msm_actuator_piezo_set_default_focus(
 	return rc;
 }
 
+#ifdef CONFIG_ZTEMT_AD5816
+static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
+	int16_t next_lens_position, uint32_t hw_params, uint16_t delay)
+{
+	struct msm_actuator_reg_params_t *write_arr = a_ctrl->reg_tbl;
+	uint32_t hw_dword = hw_params;
+	uint16_t i2c_byte1 = 0, i2c_byte2 = 0;
+	uint16_t value = 0;
+	uint32_t size = a_ctrl->reg_tbl_size, i = 0;
+	struct msm_camera_i2c_reg_array *i2c_tbl = a_ctrl->i2c_reg_tbl;
+	CDBG("Enter\n");
+	for (i = 0; i < size; i++) {
+		if (write_arr[i].reg_write_type == MSM_ACTUATOR_WRITE_DAC) {
+			value = (next_lens_position <<
+				write_arr[i].data_shift) |
+				((hw_dword & write_arr[i].hw_mask) >>
+				write_arr[i].hw_shift);
+
+			if (write_arr[i].reg_addr != 0xFFFF) {
+				i2c_byte1 = write_arr[i].reg_addr;
+				i2c_byte2 = value;
+				if (size != (i+1)) {
+					i2c_byte2 = (value & 0x0300) >> 8;
+					CDBG("byte1:0x%x, byte2:0x%x\n",
+						i2c_byte1, i2c_byte2);
+					i2c_tbl[a_ctrl->i2c_tbl_index].
+						reg_addr = i2c_byte1;
+					i2c_tbl[a_ctrl->i2c_tbl_index].
+						reg_data = i2c_byte2;
+					i2c_tbl[a_ctrl->i2c_tbl_index].
+						delay = 0;
+					a_ctrl->i2c_tbl_index++;
+					i++;
+					i2c_byte1 = write_arr[i].reg_addr;
+					i2c_byte2 = value & 0xFF;
+				}
+			} else {
+				i2c_byte1 = (value & 0xFF00) >> 8;
+				i2c_byte2 = value & 0xFF;
+			}
+		} else {
+			i2c_byte1 = write_arr[i].reg_addr;
+			i2c_byte2 = (hw_dword & write_arr[i].hw_mask) >>
+				write_arr[i].hw_shift;
+		}
+		CDBG("i2c_byte1:0x%x, i2c_byte2:0x%x\n", i2c_byte1, i2c_byte2);
+		i2c_tbl[a_ctrl->i2c_tbl_index].reg_addr = i2c_byte1;
+		i2c_tbl[a_ctrl->i2c_tbl_index].reg_data = i2c_byte2;
+		i2c_tbl[a_ctrl->i2c_tbl_index].delay = delay;
+		a_ctrl->i2c_tbl_index++;
+	}
+	CDBG("Exit\n");
+}
+#else
 static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 	int16_t next_lens_position, uint32_t hw_params, uint16_t delay)
 {
@@ -125,6 +187,7 @@ static void msm_actuator_parse_i2c_params(struct msm_actuator_ctrl_t *a_ctrl,
 	}
 	CDBG("Exit\n");
 }
+#endif
 
 static int32_t msm_actuator_init_focus(struct msm_actuator_ctrl_t *a_ctrl,
 	uint16_t size, enum msm_actuator_data_type type,
@@ -323,6 +386,107 @@ static int32_t msm_actuator_move_focus(
 	return rc;
 }
 
+/*ZTEMT: Jinghongliang Add for Read AF OTP  ---Start*/
+#ifdef CONFIG_ZTEMT_AD5816
+static int32_t msm_actuator_init_step_table(struct msm_actuator_ctrl_t *a_ctrl,
+	struct msm_actuator_set_info_t *set_info)
+{
+	int16_t code_per_step = 0;
+	int16_t cur_code = 0;
+//	int16_t i =0;
+	int16_t step_index = 0, region_index = 0;
+	uint16_t step_boundary = 0;
+	uint32_t max_code_size = 1;
+	uint16_t data_size = set_info->actuator_params.data_size;
+	CDBG("Enter\n");
+
+	for (; data_size > 0; data_size--)
+		max_code_size *= 2;
+
+	kfree(a_ctrl->step_position_table);
+	a_ctrl->step_position_table = NULL;
+
+	/* Fill step position table */
+	a_ctrl->step_position_table =
+		kmalloc(sizeof(uint16_t) *
+		(set_info->af_tuning_params.total_steps + 1), GFP_KERNEL);
+
+	if (a_ctrl->step_position_table == NULL)
+		return -ENOMEM;
+		//printk("af_start_current = %d\n",af_start_value);
+		//printk("af_infinity_current = %d\n",af_infinity_value);
+		//printk("af_macro_current = %d\n",af_macro_value);
+		//printk("actuator i2c addr = 0x%x\n",set_info->actuator_params.i2c_addr);
+		if((set_info->actuator_params.i2c_addr == 0x1c) && af_start_value > 0){
+			cur_code = af_start_value;
+			a_ctrl->step_position_table[step_index++] = cur_code;
+			for (region_index = 0;region_index < a_ctrl->region_size;region_index++) {
+				step_boundary =a_ctrl->region_params[region_index].step_bound[MOVE_NEAR];
+				if(region_index == 0){
+					code_per_step = (af_infinity_value - af_start_value)/step_boundary;
+					//printk("code_per_step_1 = %d\n",code_per_step);
+					}
+				if(region_index == 1){
+					code_per_step = (af_macro_value - af_infinity_value)*10;
+					code_per_step = code_per_step/40;
+					//printk("code_per_step_211 = %d\n",code_per_step);
+					code_per_step = (code_per_step + 5)/10;
+					//printk("code_per_step_222 = %d\n",code_per_step);
+					}
+				for (; step_index <= step_boundary;step_index++) {
+					cur_code += code_per_step;
+					if (cur_code < max_code_size){
+						a_ctrl->step_position_table[step_index] =
+							cur_code;
+						}else {
+						for (; step_index <
+							set_info->af_tuning_params.total_steps;
+							step_index++)
+							a_ctrl->
+								step_position_table[
+								step_index] =
+								max_code_size;
+					}
+				}
+			}
+		}else{
+			cur_code = set_info->af_tuning_params.initial_code;
+			a_ctrl->step_position_table[step_index++] = cur_code;
+			for (region_index = 0;
+				region_index < a_ctrl->region_size;
+				region_index++) {
+				code_per_step =
+					a_ctrl->region_params[region_index].code_per_step;
+				step_boundary =
+					a_ctrl->region_params[region_index].
+					step_bound[MOVE_NEAR];
+				for (; step_index <= step_boundary;
+					step_index++) {
+					cur_code += code_per_step;
+					if (cur_code < max_code_size)
+						a_ctrl->step_position_table[step_index] =
+							cur_code;
+					else {
+						for (; step_index <
+							set_info->af_tuning_params.total_steps;
+							step_index++)
+							a_ctrl->
+								step_position_table[
+								step_index] =
+								max_code_size;
+					}
+				}
+			}
+	}
+
+//	for(;i<step_index; i++){
+//		printk("step22 [%d] = %d\n",i,a_ctrl->step_position_table[i]);
+//	}
+
+	CDBG("Exit\n");
+	return 0;
+}  /*ZTEMT: Jinghongliang Add for Read AF OTP  ---Start*/
+#else
 static int32_t msm_actuator_init_step_table(struct msm_actuator_ctrl_t *a_ctrl,
 	struct msm_actuator_set_info_t *set_info)
 {
@@ -378,6 +542,7 @@ static int32_t msm_actuator_init_step_table(struct msm_actuator_ctrl_t *a_ctrl,
 	CDBG("Exit\n");
 	return 0;
 }
+#endif
 
 static int32_t msm_actuator_set_default_focus(
 	struct msm_actuator_ctrl_t *a_ctrl,
@@ -408,43 +573,6 @@ static int32_t msm_actuator_power_down(struct msm_actuator_ctrl_t *a_ctrl)
 	a_ctrl->i2c_reg_tbl = NULL;
 	a_ctrl->i2c_tbl_index = 0;
 	CDBG("Exit\n");
-	return rc;
-}
-
-static int32_t msm_actuator_set_position(
-	struct msm_actuator_ctrl_t *a_ctrl,
-	struct msm_actuator_set_position_t *set_pos)
-{
-	int32_t rc = 0;
-	int32_t index;
-	uint16_t next_lens_position;
-	uint16_t delay;
-	uint32_t hw_params = 0;
-	struct msm_camera_i2c_reg_setting reg_setting;
-	CDBG("%s Enter %d\n", __func__, __LINE__);
-	if (set_pos->number_of_steps  == 0)
-		return rc;
-
-	a_ctrl->i2c_tbl_index = 0;
-	for (index = 0; index < set_pos->number_of_steps; index++) {
-		next_lens_position = set_pos->pos[index];
-		delay = set_pos->delay[index];
-		a_ctrl->func_tbl->actuator_parse_i2c_params(a_ctrl,
-		next_lens_position, hw_params, delay);
-
-		reg_setting.reg_setting = a_ctrl->i2c_reg_tbl;
-		reg_setting.size = a_ctrl->i2c_tbl_index;
-		reg_setting.data_type = a_ctrl->i2c_data_type;
-
-		rc = a_ctrl->i2c_client.i2c_func_tbl->i2c_write_table_w_microdelay(
-			&a_ctrl->i2c_client, &reg_setting);
-		if (rc < 0) {
-			pr_err("%s Failed I2C write Line %d\n", __func__, __LINE__);
-			return rc;
-		}
-		a_ctrl->i2c_tbl_index = 0;
-	}
-	CDBG("%s exit %d\n", __func__, __LINE__);
 	return rc;
 }
 
@@ -602,12 +730,6 @@ static int32_t msm_actuator_config(struct msm_actuator_ctrl_t *a_ctrl,
 			pr_err("move focus failed %d\n", rc);
 		break;
 
-	case CFG_SET_POSITION:
-		rc = a_ctrl->func_tbl->actuator_set_position(a_ctrl,
-			&cdata->cfg.setpos);
-		if (rc < 0)
-			pr_err("actuator_set_position failed %d\n", rc);
-		break;
 	default:
 		break;
 	}
@@ -962,7 +1084,6 @@ static struct msm_actuator msm_vcm_actuator_table = {
 		.actuator_set_default_focus = msm_actuator_set_default_focus,
 		.actuator_init_focus = msm_actuator_init_focus,
 		.actuator_parse_i2c_params = msm_actuator_parse_i2c_params,
-		.actuator_set_position = msm_actuator_set_position,
 	},
 };
 
